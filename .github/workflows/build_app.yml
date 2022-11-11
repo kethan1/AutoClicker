@@ -1,0 +1,36 @@
+name: Build AutoClicker App
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.7'
+            
+      - name: Install Dependencies
+        shell: bash
+        run: |
+            pip install wheel
+            pip install -r requirements.txt
+
+      - name: Build App
+        shell: bash
+        run: | 
+            pyinstaller --onefile --icon="icon.png" --noconsole autoclicker.py
+            mv dist autoclicker-${{ runner.os }}
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: autoclicker-${{ runner.os }}
+          path: autoclicker-${{ runner.os }}

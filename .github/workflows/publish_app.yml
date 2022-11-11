@@ -1,0 +1,52 @@
+name: Build & Publish AutoClicker App
+
+on:
+  push:
+    tags:
+    - '*'
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9.7'
+            
+      - name: Install Dependencies
+        shell: bash
+        run: |
+            pip install wheel
+            pip install -r requirements.txt
+      - name: Build App
+        shell: bash
+        run: | 
+            pyinstaller --onefile --icon="icon.png" --noconsole autoclicker.py
+            mv dist autoclicker-${{ runner.os }}
+            if [ "$RUNNER_OS" == "Linux" ]; then
+              zip -r autoclicker-${{ runner.os }}.zip autoclicker-${{ runner.os }}
+            elif [ "$RUNNER_OS" == "Windows" ]; then
+              7z a autoclicker-${{ runner.os }}.zip autoclicker-${{ runner.os }}
+            elif [ "$RUNNER_OS" == "macOS" ]; then
+              zip -r autoclicker-${{ runner.os }}.zip autoclicker-${{ runner.os }}
+            fi
+      - uses: actions/upload-artifact@v2
+        with:
+          name: space-invaders-${{ runner.os }}
+          path: space-invaders-${{ runner.os }}
+        
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: space-invaders-${{ runner.os }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true
